@@ -4,6 +4,7 @@ module Slugjitsu
   class << self
     attr_accessor :translation_to
     attr_accessor :translation_from
+    attr_accessor :reservered_words
   end
   
   def self.append_features(base)
@@ -13,6 +14,8 @@ module Slugjitsu
   # creates a dir safe name that is unique to the give scope which is a list of existing names
   def self.dirify(str, scope)
       str = Iconv.iconv(translation_to, translation_from, str).to_s
+      scope.concat(reserved_words)
+      
       str.gsub!(/\W+/, ' ') # all non-word chars to spaces
       str.strip!            # ohh la la
       str.downcase!         #
@@ -76,3 +79,4 @@ end
 
 Slugjitsu.translation_to   = 'ascii//ignore//translit'
 Slugjitsu.translation_from = 'utf-8'
+Slugjitsu.reserved_words   = %w{new edit}
