@@ -5,6 +5,7 @@ module Slugjitsu
     attr_accessor :translation_to
     attr_accessor :translation_from
     attr_accessor :reserved_words
+    attr_accessor :max_length
   end
   
   def self.append_features(base)
@@ -16,10 +17,11 @@ module Slugjitsu
       str = Iconv.iconv(translation_to, translation_from, str).to_s
       scope.concat(reserved_words)
       
-      str.gsub!(/\W+/, ' ') # all non-word chars to spaces
-      str.strip!            # ohh la la
-      str.downcase!         #
-      str.gsub!(/\ +/, '-') # spaces to dashes, preferred separator char everywhere
+      str.gsub!(/\W+/, ' ')     # all non-word chars to spaces
+      str = str[0...max_length] # shorten if over max length
+      str.strip!                # ohh la la
+      str.downcase!             #
+      str.gsub!(/\ +/, '-')     # spaces to dashes, preferred separator char everywhere
       
       str.sub!(/_(\d+)|$/) {|m| '_' + ($1.to_i.next.to_s || '2')} while scope.include?(str) 
       str
@@ -80,3 +82,4 @@ end
 Slugjitsu.translation_to   = 'ascii//ignore//translit'
 Slugjitsu.translation_from = 'utf-8'
 Slugjitsu.reserved_words   = %w{new}
+Slugjitsu.max_length       = 100
