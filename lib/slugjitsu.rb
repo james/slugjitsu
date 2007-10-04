@@ -79,4 +79,4 @@ end
 
 Slugjitsu.translation_to   = 'ascii//ignore//translit'
 Slugjitsu.translation_from = 'utf-8'
-Slugjitsu.reserved_words   = %w{new edit}
+Slugjitsu.reserved_words   = %w{new}
