@@ -4,7 +4,7 @@ module Slugjitsu
   class << self
     attr_accessor :translation_to
     attr_accessor :translation_from
-    attr_accessor :reservered_words
+    attr_accessor :reserved_words
   end
   
   def self.append_features(base)
