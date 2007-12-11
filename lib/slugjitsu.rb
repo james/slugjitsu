@@ -1,9 +1,5 @@
-require 'iconv'
-
 module Slugjitsu
   class << self
-    attr_accessor :translation_to
-    attr_accessor :translation_from
     attr_accessor :reserved_words
     attr_accessor :max_length
   end
@@ -14,17 +10,28 @@ module Slugjitsu
 
   # creates a dir safe name that is unique to the give scope which is a list of existing names
   def self.dirify(str, scope)
-      str = Iconv.iconv(translation_to, translation_from, str).to_s
-      scope.concat(reserved_words)
-      
-      str.gsub!(/\W+/, ' ')     # all non-word chars to spaces
-      str = str[0...max_length] # shorten if over max length
-      str.strip!                # ohh la la
-      str.downcase!             #
-      str.gsub!(/\ +/, '-')     # spaces to dashes, preferred separator char everywhere
-      
-      str.sub!(/_(\d+)|$/) {|m| '_' + ($1.to_i.next.to_s || '2')} while scope.include?(str) 
-      str
+    # Change accented latin characters to their non-accented
+    # forms by normalizing the string and then removing 
+    # special unicode characters
+    str = str.dup
+    str.chars.normalize!(:d)
+    str.chars.gsub!(/[^\0-\x80]/, '')
+    
+    reserved_words.each do |word|
+      scope << word unless scope.include?(word)
+    end
+
+    str.chars.gsub!(/\W+/, ' ')     # all non-word chars to spaces
+    str = str.chars[0...max_length] # shorten if over max length
+    str.chars.strip!                # ohh la la
+    str.chars.downcase!             #
+    str.chars.gsub!(/\ +/, '-')     # spaces to dashes, preferred separator char everywhere
+    
+    candidate = str
+    number = 0 
+    
+    candidate = "#{str}-#{number = number + 1}" while scope.include?(candidate.to_s)  
+    candidate.to_s
   end
   
   # exception thrown if items of a given uri not found
@@ -73,13 +80,34 @@ module Slugjitsu
         where = ''
       end
       
-      self.class.find_by_sql("select #{slug} from #{self.class.table_name} #{where}").collect(&slug)
+      SlugFinder.new(self.class, where)
     end
   end
   
+  class SlugFinder
+    def initialize(model, where)
+      @model = model
+      @where = where
+    end
+    
+    def include?(slug)
+      sql = "select 1 from #{@model.table_name} WHERE "
+      sql << " #{@where} AND " unless @where.empty?
+      sql << "#{@model.read_inheritable_attribute(:slugjitsu_slug_field)} = '#{slug}'"
+      prohibited.include?(slug) || @model.connection.select_one(sql)
+    end
+    
+    # Used by slugjitsu to add prohibited words to the scope  
+    
+    def <<(something)
+      prohibited << something
+    end
+    
+    def prohibited
+      @prohibited ||= []
+    end
+  end 
 end
 
-Slugjitsu.translation_to   = 'ascii//ignore//translit'
-Slugjitsu.translation_from = 'utf-8'
 Slugjitsu.reserved_words   = %w{new}
 Slugjitsu.max_length       = 100
