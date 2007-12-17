@@ -2,6 +2,7 @@ module Slugjitsu
   class << self
     attr_accessor :reserved_words
     attr_accessor :max_length
+    attr_accessor :downcase
   end
   
   def self.append_features(base)
@@ -24,7 +25,7 @@ module Slugjitsu
     str.chars.gsub!(/\W+/, ' ')     # all non-word chars to spaces
     str = str.chars[0...max_length] # shorten if over max length
     str.chars.strip!                # ohh la la
-    str.chars.downcase!             #
+    str.chars.downcase! if Slugjitsu.downcase
     str.chars.gsub!(/\ +/, '-')     # spaces to dashes, preferred separator char everywhere
     
     candidate = str
@@ -111,3 +112,4 @@ end
 
 Slugjitsu.reserved_words   = %w{new}
 Slugjitsu.max_length       = 100
+Slugjitsu.downcase         = true
