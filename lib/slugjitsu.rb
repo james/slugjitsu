@@ -76,7 +76,7 @@ module Slugjitsu
       
       if scope
         scope_id = send("#{scope.to_s}_id")
-        where = "where #{scope.to_s}_id = #{scope_id}"
+        where = "#{scope.to_s}_id = #{scope_id}"
       else
         where = ''
       end
