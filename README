@@ -1,0 +1,24 @@
+For Making slugs.
+
+Made by Dan Webb.
+
+How to use with Active Record:
+
+#  title                      :string(255)     
+#  slug                       :string(255)
+class Item < ActiveRecord::Base
+  has_slug :title, :slug, :always_update => true
+  
+  def to_param
+    slug
+  end
+  
+  def slug=(val)
+    unless new_record?
+      write_attribute(:slug, Slugjitsu::dirify(val, slug_scope))
+    else
+      super
+    end
+  end
+  
+end
